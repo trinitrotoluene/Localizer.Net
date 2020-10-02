@@ -92,7 +92,7 @@ namespace Localizer.Net.Tests
         }
 
         [Test]
-        public void AssertExecyteStatementReplamentAtStart()
+        public void AssertExecuteStatementReplamentAtStart()
         {
             var localization = new LocalizationBuilder()
                 .UseJsonFiles("locales")
