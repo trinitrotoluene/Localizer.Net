@@ -4,7 +4,7 @@ using NUnit.Framework;
 
 namespace Localizer.Net.Tests
 {
-    public class Tests
+    public class LocalizerTests
     {
         [Test]
         public void AssertCanLoadJsonLocalisations()
@@ -32,7 +32,7 @@ namespace Localizer.Net.Tests
         }
 
         [Test]
-        public void AssertLocalizationCanBeInjected()
+        public void AssertLocalizationCanBeInjectedStatic()
         {
             var localization = new LocalizationBuilder()
                 .UseJsonFiles("locales")
@@ -43,6 +43,20 @@ namespace Localizer.Net.Tests
             Assert.AreEqual("world", LocalizableClass.WorldString.Localize("en-US"));
             Assert.AreEqual("told me", LocalizableClass.SomebodyOnceString.Localize("en-US"));
         }
+
+        [Test]
+        public void AssertLocalizationCanBeInjectedInstance()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            var instance = new LocalizableInstanceClass();
+
+            Localizer.Inject(instance, localization);
+
+            Assert.AreEqual("world", instance.WorldString.Localize("en-US"));
+        }
     }
 
     class LocalizableClass
@@ -52,5 +66,11 @@ namespace Localizer.Net.Tests
 
         [Localize("somebody.once")]
         public static LocalizedString SomebodyOnceString;
+    }
+
+    class LocalizableInstanceClass
+    {
+        [Localize("hello")]
+        public LocalizedString WorldString;
     }
 }

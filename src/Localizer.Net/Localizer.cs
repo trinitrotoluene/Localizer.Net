@@ -6,6 +6,22 @@ namespace Localizer.Net
 {
     public static class Localizer
     {
+        public static void Inject<TTarget>(TTarget target, ILocalization localization)
+        {
+            var fields = typeof(TTarget).GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            foreach (var field in fields)
+            {
+                if (field.FieldType != typeof(LocalizedString))
+                {
+                    continue;
+                }
+
+                var localizedString = CreateLocalizedString(localization, field);
+                field.SetValue(target, localizedString);
+            }
+        }
+
         public static void Inject(ILocalization localization, Assembly assembly)
         {
             foreach (var type in assembly.GetTypes())

@@ -4,6 +4,10 @@ namespace Localizer.Net
 {
     public class LocalizerException : Exception
     {
+        public LocalizerException()
+        {
+        }
+
         public LocalizerException(string message) : base(message)
         {
         }
