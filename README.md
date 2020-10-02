@@ -59,7 +59,7 @@ and the localised strings can be retrieved using the name of the JSON file that 
 
 ```cs
 string welcome = HomeStrings.Welcome.Localize("en-US");
-string login = HomeStrings.Welcome.Localize("de-DE");
+string login = HomeStrings.Login.Localize("de-DE");
 string register = HomeStrings.Register.Localize("en-US");
 ```
 
