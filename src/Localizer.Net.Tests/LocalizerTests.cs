@@ -90,6 +90,17 @@ namespace Localizer.Net.Tests
             var test2 = localization.Resolve("en-US", "context-tests.test3", ("isDrill", true), ("drill", "drill"));
             Assert.AreEqual("This is not a drill!", test2);
         }
+
+        [Test]
+        public void AssertExecyteStatementReplamentAtStart()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            var test4 = localization.Resolve("en-US", "context-tests.test4", ("isKieran", true));
+            Assert.AreEqual("Kieran is cool", test4);
+        }
     }
 
     class LocalizableClass
