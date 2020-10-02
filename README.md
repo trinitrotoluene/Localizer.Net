@@ -65,4 +65,33 @@ string register = HomeStrings.Register.Localize("en-US");
 
 ## Localization Context
 
-**todo**
+Localizer.Net supports inline C# scripting with some restrictions. You do this by supplying an `ILocalizer`/`LocalizedString` with a localisation "context".
+A context is simply a param array of `(string, object)` tuples which must have unique keys that will be made available to the scripting environment during execution as global variables.
+
+For example:
+
+```json
+{
+    "somekey": "Hello, {place}"
+}
+```
+
+```cs
+ILocalization myLocalization.Resolve("en-US", "somekey", ("place", "world!")); // "Hello, world!"
+```
+
+However since all code between braces executes in a full Roslyn-powered scripting environment, you can also add more complexity to your localisations.
+
+> **In order to make writing scripts in JSON less painful, all single quotation marks in a script are replaced with double quotes after parsing.**
+
+```json
+{
+    "somekey": "Hello, {isAlone ? 'friends!' : 'is anybody there?'}"
+}
+```
+
+```cs
+ILocalization myLocalization.Resolve("en-US", "somekey", ("isAlone", false)); // "Hello, is anybody there?"
+```
+
+Strings that do not include scripts will bypass this execution stage as it will add a significant latency penalty to returning localised strings. A point of future improvement for the library will be aggressive caching of scripts and "fast" paths for simple replacements like `"{foo}"`.
