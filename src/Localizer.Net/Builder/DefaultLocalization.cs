@@ -89,7 +89,7 @@ namespace Localizer.Net
         {
             int number = 0;
 
-            int index = 0;
+            int index = -1;
             int closingIndex = 0;
             ParseResult lastResult = null;
 
