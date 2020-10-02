@@ -132,6 +132,7 @@ namespace Localizer.Net
                     .Append('}');
 
                 var scriptText = value.Substring(index + 1, length);
+                scriptText = scriptText.Replace('\'', '\"');
                 lastResult = new ParseResult(closingIndex, scriptText);
                 yield return lastResult;
             }
