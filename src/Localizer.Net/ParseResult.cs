@@ -2,14 +2,14 @@ namespace Localizer.Net
 {
     internal class ParseResult
     {
-        public string FormatString { get; }
+        public int EndIndex { get; }
 
-        public string[] Scripts { get; }
+        public string Text { get; }
 
-        public ParseResult(string formatString, string[] scripts)
+        public ParseResult(int endIndex, string text)
         {
-            FormatString = formatString;
-            Scripts = scripts;
+            EndIndex = endIndex;
+            Text = text;
         }
     }
 }

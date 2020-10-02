@@ -57,6 +57,28 @@ namespace Localizer.Net.Tests
 
             Assert.AreEqual("world", instance.WorldString.Localize("en-US"));
         }
+
+        [Test]
+        public void AssertExecuteSimpleReplacement()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            var test1 = localization.Resolve("en-US", "context-tests.test1", ("drill", "test"));
+            Assert.AreEqual("This is not a test!", test1);
+        }
+
+        [Test]
+        public void AssertExecuteMultipleReplacement()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            var test2 = localization.Resolve("en-US", "context-tests.test2", ("drill", "test"), ("drill2", "test2"));
+            Assert.AreEqual("This is not a test test2", test2);
+        }
     }
 
     class LocalizableClass

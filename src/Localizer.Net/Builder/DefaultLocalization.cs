@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.Scripting;
 
 namespace Localizer.Net
 {
@@ -14,10 +17,134 @@ namespace Localizer.Net
 
         public string Resolve(string locale, string path, params (string name, object value)[] context)
         {
-            // todo: exceptions
             var localeImpl = _locales[locale];
-            // todo: find, cache and execute scripts in the localisation string returned by the localeImpl.
-            return localeImpl.Get(path);
+            var locString = localeImpl.Get(path);
+
+            var parseResults = new List<ParseResult>();
+            var sb = new StringBuilder();
+            ParseResult lastResult = null;
+
+            foreach (var result in Parse(sb, locString))
+            {
+                lastResult = result;
+                parseResults.Add(result);
+            }
+
+            if (parseResults.Count > 0)
+            {
+                if (lastResult?.EndIndex > 0 && lastResult.EndIndex != (locString.Length - 1))
+                {
+                    var startIndex = lastResult.EndIndex + 1;
+                    sb.Append(locString.Substring(startIndex, locString.Length - startIndex));
+                }
+
+                var args = new Dictionary<string, object>();
+
+                foreach (var contextItem in context)
+                {
+                    args[contextItem.name] = contextItem.value;
+                }
+
+                var globals = new Globals(args);
+                var injectionString = CreateInjectionString(globals);
+
+                var results = new object[parseResults.Count];
+                for (int i = 0; i < parseResults.Count; i++)
+                {
+                    var result = CSharpScript.EvaluateAsync(
+                        injectionString + parseResults[i].Text,
+                        ScriptOptions.Default.WithImports("System"),
+                        globals
+                    )
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+
+                    results[i] = result;
+                }
+
+                var formatString = sb.ToString();
+                var formattedString = string.Format(formatString, results);
+
+                return formattedString;
+            }
+            else
+            {
+                return locString;
+            }
+        }
+
+        private string CreateInjectionString(Globals globals)
+        {
+            var sb = new StringBuilder();
+            foreach (var kvp in globals.Args)
+            {
+                var typeName = kvp.Value.GetType().Name;
+                sb.AppendLine($"{typeName} {kvp.Key} = ({typeName}) Args[\"{kvp.Key}\"];");
+            }
+            return sb.ToString();
+        }
+
+        private IEnumerable<ParseResult> Parse(StringBuilder output, string value)
+        {
+            int number = 0;
+
+            int index = 0;
+            int closingIndex = 0;
+            ParseResult lastResult = null;
+
+            while (index < value.Length)
+            {
+                index = value.IndexOf('{', index + 1);
+
+                if (index == -1)
+                {
+                    break;
+                }
+
+                closingIndex = value.IndexOf('}', closingIndex + 1);
+                if (closingIndex == -1)
+                {
+                    throw new LocalizerException($"OpeningBraceIndex: {index}, missing closing brace! Source: {value}");
+                }
+
+                var length = closingIndex - (index + 1);
+                if (length < 1)
+                {
+                    throw new LocalizerException($"Empty context at index {index}! Source: {value}");
+                }
+
+                string rawTextBetween;
+                if (number == 0)
+                {
+                    rawTextBetween = value.Substring(0, index);
+                }
+                else
+                {
+                    var betweenIndex = lastResult.EndIndex + 1;
+                    rawTextBetween = value.Substring(betweenIndex, index - betweenIndex);
+                }
+
+                output.Append(rawTextBetween);
+
+                output.Append('{')
+                    .Append(number++)
+                    .Append('}');
+
+                var scriptText = value.Substring(index + 1, length);
+                lastResult = new ParseResult(closingIndex, scriptText);
+                yield return lastResult;
+            }
+        }
+    }
+
+    public class Globals
+    {
+        public Dictionary<string, object> Args { get; private set; }
+
+        public Globals(Dictionary<string, object> args)
+        {
+            Args = args;
         }
     }
 }
