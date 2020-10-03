@@ -7,11 +7,13 @@ namespace Localizer.Net
     {
         public string PathSeparator { get; private set; } = ".";
 
-        private readonly IDictionary<string, Locale> _locales;
+        public string DefaultLocale { get; private set; } = null;
+
+        private readonly List<Func<LocalizationBuilder, IEnumerable<Locale>>> _builders;
 
         public LocalizationBuilder()
         {
-            _locales = new Dictionary<string, Locale>();
+            _builders = new List<Func<LocalizationBuilder, IEnumerable<Locale>>>();
         }
 
         public LocalizationBuilder WithPathSeparator(string pathSeparator)
@@ -26,20 +28,42 @@ namespace Localizer.Net
             return this;
         }
 
-        public LocalizationBuilder AddLocale(string key, Locale locale)
+        public LocalizationBuilder WithDefaultLocale(string localeName)
         {
-            if (_locales.ContainsKey(key))
+            if (string.IsNullOrEmpty(localeName))
             {
-                throw new InvalidOperationException("A locale already exists with this key.");
+                throw new ArgumentException($"The name of a default locale may not be null or empty.");
             }
 
-            _locales[key] = locale;
+            DefaultLocale = localeName;
+
+            return this;
+        }
+
+        public LocalizationBuilder WithLocaleGenerator(Func<LocalizationBuilder, IEnumerable<Locale>> generatorFunc)
+        {
+            _builders.Add(generatorFunc);
             return this;
         }
 
         public ILocalization Build()
         {
-            return new DefaultLocalization(_locales);
+            var finalDict = new Dictionary<string, Locale>();
+            foreach (var builder in _builders)
+            {
+                var locales = builder(this);
+                foreach (var locale in locales)
+                {
+                    if (finalDict.ContainsKey(locale.Tag))
+                    {
+                        throw new LocalizerException($"A locale with tag {locale.Tag} already exists in this builder.");
+                    }
+
+                    finalDict.Add(locale.Tag, locale);
+                }
+            }
+
+            return new DefaultLocalization(finalDict);
         }
     }
 }

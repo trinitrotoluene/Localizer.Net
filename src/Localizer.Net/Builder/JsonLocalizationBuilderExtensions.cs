@@ -8,7 +8,13 @@ namespace Localizer.Net
     {
         public static LocalizationBuilder UseJsonFiles(this LocalizationBuilder builder, string path)
         {
-            var locales = new Dictionary<string, Locale>();
+            builder.WithLocaleGenerator(x => JsonBuilderFunc(x, path));
+            return builder;
+        }
+
+        private static IEnumerable<Locale> JsonBuilderFunc(LocalizationBuilder builder, string path)
+        {
+            var locales = new List<Locale>();
 
             foreach (var fileName in Directory.EnumerateFiles(path, "*.json", SearchOption.AllDirectories))
             {
@@ -24,15 +30,10 @@ namespace Localizer.Net
                 var localeTag = Path.GetFileNameWithoutExtension(fileName);
                 var locale = new Locale(localeTag, valuePairs);
 
-                locales[localeTag] = locale;
+                locales.Add(locale);
             }
 
-            foreach (var kvp in locales)
-            {
-                builder.AddLocale(kvp.Key, kvp.Value);
-            }
-
-            return builder;
+            return locales;
         }
 
         private static void FlattenJsonFile(LocalizationBuilder builder, JsonProperty jsonProperty, Dictionary<string, string> valuePairs, string keyPrefix = "")
