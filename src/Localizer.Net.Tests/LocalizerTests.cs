@@ -113,6 +113,29 @@ namespace Localizer.Net.Tests
         {
             Assert.Throws<LocalizerException>(() => _localization.Resolve("en-US", "I don't exist"));
         }
+
+        [Test]
+        public void AssertThrowsBadDefaultLocale()
+        {
+            Assert.Throws<LocalizerException>(() => new LocalizationBuilder().WithDefaultLocale("blah").Build());
+        }
+
+        [Test]
+        public void AssertFallbackToDefaultLocale()
+        {
+            var localization = new LocalizationBuilder()
+                .WithDefaultLocale("en-US")
+                .UseJsonFiles("locales")
+                .Build();
+
+            Assert.AreEqual("world", localization.Resolve("de-DE", "hello"));
+        }
+
+        [Test]
+        public void AssertThrowsBadLocale()
+        {
+            Assert.Throws<LocalizerException>(() => new LocalizationBuilder().Build().Resolve("blah", "blah"));
+        }
     }
 
     class LocalizableClass

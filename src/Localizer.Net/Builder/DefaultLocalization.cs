@@ -10,15 +10,26 @@ namespace Localizer.Net
     {
         private readonly IDictionary<string, Locale> _locales;
 
-        public DefaultLocalization(IDictionary<string, Locale> locales)
+        private readonly Locale _defaultLocale = null;
+
+        public DefaultLocalization(IDictionary<string, Locale> locales, string defaultLocale = null)
         {
             _locales = locales;
+            if (defaultLocale != null)
+            {
+                _defaultLocale = locales[defaultLocale];
+            }
         }
 
         public string Resolve(string locale, string path, params (string name, object value)[] context)
         {
-            var localeImpl = _locales[locale];
-            if (!localeImpl.TryGet(path, out var locString))
+            if (!_locales.TryGetValue(locale, out var localeImpl))
+            {
+                throw new LocalizerException($"No locale exists with tag {locale}!");
+            }
+
+            if (!localeImpl.TryGet(path, out var locString) &&
+                !(_defaultLocale?.TryGet(path, out locString) ?? false))
             {
                 throw new LocalizerException($"Locale {localeImpl.Tag} has no value for path {path}!");
             }
@@ -139,16 +150,6 @@ namespace Localizer.Net
                 lastResult = new ParseResult(closingIndex, scriptText);
                 yield return lastResult;
             }
-        }
-    }
-
-    public class Globals
-    {
-        public Dictionary<string, object> Args { get; private set; }
-
-        public Globals(Dictionary<string, object> args)
-        {
-            Args = args;
         }
     }
 }
