@@ -63,7 +63,12 @@ namespace Localizer.Net
                 }
             }
 
-            return new DefaultLocalization(finalDict);
+            if (DefaultLocale != null && !finalDict.ContainsKey(DefaultLocale))
+            {
+                throw new LocalizerException($"The specified default locale \"{DefaultLocale}\" does not exist.");
+            }
+
+            return new DefaultLocalization(finalDict, DefaultLocale);
         }
     }
 }
