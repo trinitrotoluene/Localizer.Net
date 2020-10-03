@@ -108,15 +108,15 @@ namespace Localizer.Net.Tests
     class LocalizableClass
     {
         [Localize("hello")]
-        public static LocalizedString WorldString;
+        public static LocalizedString WorldString = default;
 
         [Localize("somebody.once")]
-        public static LocalizedString SomebodyOnceString;
+        public static LocalizedString SomebodyOnceString = default;
     }
 
     class LocalizableInstanceClass
     {
         [Localize("hello")]
-        public LocalizedString WorldString;
+        public LocalizedString WorldString = default;
     }
 }
