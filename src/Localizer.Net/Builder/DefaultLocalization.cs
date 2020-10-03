@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
@@ -28,64 +29,126 @@ namespace Localizer.Net
                 throw new LocalizerException($"No locale exists with tag {locale}!");
             }
 
-            if (!localeImpl.TryGet(path, out var locString) &&
-                !(_defaultLocale?.TryGet(path, out locString) ?? false))
+            if (!localeImpl.TryGet(path, out var locString))
             {
-                throw new LocalizerException($"Locale {localeImpl.Tag} has no value for path {path}!");
-            }
-
-            var parseResults = new List<ParseResult>();
-            var sb = new StringBuilder();
-            ParseResult lastResult = null;
-
-            foreach (var result in Parse(sb, locString))
-            {
-                lastResult = result;
-                parseResults.Add(result);
-            }
-
-            if (parseResults.Count > 0)
-            {
-                if (lastResult?.EndIndex > 0 && lastResult.EndIndex != (locString.Length - 1))
+                if (!(_defaultLocale?.TryGet(path, out locString) ?? false))
                 {
-                    var startIndex = lastResult.EndIndex + 1;
-                    sb.Append(locString.Substring(startIndex, locString.Length - startIndex));
+                    throw new LocalizerException($"Locale {localeImpl.Tag} has no value for path {path}!");
                 }
 
-                var args = new Dictionary<string, object>();
+                localeImpl = _defaultLocale;
+            }
 
-                foreach (var contextItem in context)
+            if (localeImpl.TryGetFromCache(path, out var cachedPathItem))
+            {
+                switch (cachedPathItem.Type)
                 {
-                    args[contextItem.name] = contextItem.value;
+                    case CacheItemType.Literal:
+                        return locString;
+                    case CacheItemType.Formatted:
+                        return ExecuteScriptsAndFormat(cachedPathItem, context);
+                    default:
+                        Debug.Fail("Invalid CacheItemType passed to PathCacheItem!");
+                        throw new Exception();
+                }
+            }
+            else
+            {
+                var sb = new StringBuilder();
+                ParseResult lastResult = null;
+                var parseResults = Parse(sb, locString).ToArray();
+                if (parseResults.Length > 0)
+                {
+                    lastResult = parseResults[parseResults.Length - 1];
                 }
 
-                var globals = new Globals(args);
-                var injectionString = CreateInjectionString(globals);
-
-                var results = new object[parseResults.Count];
-                for (int i = 0; i < parseResults.Count; i++)
+                PathCacheItem cacheItem;
+                if (parseResults.Length > 0)
                 {
-                    var result = CSharpScript.EvaluateAsync(
-                        injectionString + parseResults[i].Text,
-                        ScriptOptions.Default.WithImports("System"),
-                        globals
-                    )
+                    if (lastResult?.EndIndex > 0 && lastResult.EndIndex != (locString.Length - 1))
+                    {
+                        var startIndex = lastResult.EndIndex + 1;
+                        sb.Append(locString.Substring(startIndex, locString.Length - startIndex));
+                    }
+
+                    cacheItem = new PathCacheItem(CacheItemType.Formatted, sb.ToString(), parseResults);
+                    localeImpl.TryAdd(path, cacheItem);
+
+                    var results = CreateAndExecuteScripts(cacheItem, context);
+
+                    var formatString = sb.ToString();
+                    var formattedString = string.Format(formatString, results);
+
+                    return formattedString;
+                }
+                else
+                {
+                    cacheItem = new PathCacheItem(CacheItemType.Literal, locString, null);
+                    localeImpl.TryAdd(path, cacheItem);
+                    return locString;
+                }
+            }
+        }
+
+        private string ExecuteScriptsAndFormat(PathCacheItem item, (string name, object value)[] context)
+        {
+            var args = CreateGlobalDictionary(context);
+            var globals = new Globals(args);
+
+            var results = new object[item.ParseResults.Length];
+            for (int i = 0; i < item.ParseResults.Length; i++)
+            {
+                var result = item.ParseResults[i].Script.RunAsync(globals)
                     .ConfigureAwait(false)
                     .GetAwaiter()
                     .GetResult();
 
-                    results[i] = result;
-                }
-
-                var formatString = sb.ToString();
-                var formattedString = string.Format(formatString, results);
-
-                return formattedString;
+                results[i] = result.ReturnValue;
             }
-            else
+
+            return string.Format(item.FormatString, results);
+        }
+
+        private object[] CreateAndExecuteScripts(PathCacheItem item, (string name, object value)[] context)
+        {
+            var parseResults = item.ParseResults;
+
+            var args = CreateGlobalDictionary(context);
+            var globals = new Globals(args);
+            var injectionString = CreateInjectionString(globals);
+
+            var results = new object[parseResults.Length];
+            for (int i = 0; i < parseResults.Length; i++)
             {
-                return locString;
+                var script = CSharpScript.Create(
+                    injectionString + parseResults[i].Text,
+                    ScriptOptions.Default.WithImports("System"),
+                    typeof(Globals)
+                );
+                script.Compile();
+                parseResults[i].Script = script;
+
+                var result = script.RunAsync(globals)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
+
+                results[i] = result.ReturnValue;
             }
+
+            return results;
+        }
+
+        private Dictionary<string, object> CreateGlobalDictionary((string name, object value)[] context)
+        {
+            var args = new Dictionary<string, object>();
+
+            foreach (var contextItem in context)
+            {
+                args[contextItem.name] = contextItem.value;
+            }
+
+            return args;
         }
 
         private string CreateInjectionString(Globals globals)
@@ -99,8 +162,10 @@ namespace Localizer.Net
             return sb.ToString();
         }
 
-        private IEnumerable<ParseResult> Parse(StringBuilder output, string value)
+        private List<ParseResult> Parse(StringBuilder output, string value)
         {
+            var parseList = new List<ParseResult>();
+
             int number = 0;
 
             int index = -1;
@@ -148,8 +213,11 @@ namespace Localizer.Net
                 var scriptText = value.Substring(index + 1, length);
                 scriptText = scriptText.Replace('\'', '\"');
                 lastResult = new ParseResult(closingIndex, scriptText);
-                yield return lastResult;
+
+                parseList.Add(lastResult);
             }
+
+            return parseList;
         }
     }
 }

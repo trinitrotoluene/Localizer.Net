@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Localizer.Net", "src\Locali
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Localizer.Net.Tests", "src\Localizer.Net.Tests\Localizer.Net.Tests.csproj", "{320D8C88-2EDE-478B-A396-165DD5A90ADB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Localizer.Net.Benchmarks", "src\Localizer.Net.Benchmarks\Localizer.Net.Benchmarks.csproj", "{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,9 +48,22 @@ Global
 		{320D8C88-2EDE-478B-A396-165DD5A90ADB}.Release|x64.Build.0 = Release|Any CPU
 		{320D8C88-2EDE-478B-A396-165DD5A90ADB}.Release|x86.ActiveCfg = Release|Any CPU
 		{320D8C88-2EDE-478B-A396-165DD5A90ADB}.Release|x86.Build.0 = Release|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Debug|x64.Build.0 = Debug|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Debug|x86.Build.0 = Debug|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Release|x64.ActiveCfg = Release|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Release|x64.Build.0 = Release|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Release|x86.ActiveCfg = Release|Any CPU
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{28E1F7A4-61E1-4EDE-83B4-33FB2B58D6F2} = {BCD91001-B322-4E13-831D-9FAFF27EA126}
 		{320D8C88-2EDE-478B-A396-165DD5A90ADB} = {BCD91001-B322-4E13-831D-9FAFF27EA126}
+		{D4CEB87D-1AE1-4E70-AA71-08B5F7B112A9} = {BCD91001-B322-4E13-831D-9FAFF27EA126}
 	EndGlobalSection
 EndGlobal

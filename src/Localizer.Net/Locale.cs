@@ -1,4 +1,6 @@
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using Microsoft.CodeAnalysis.Scripting;
 
 namespace Localizer.Net
 {
@@ -8,15 +10,28 @@ namespace Localizer.Net
 
         private readonly IDictionary<string, string> _values;
 
+        private readonly IDictionary<string, PathCacheItem> _pathCache;
+
         public Locale(string tag, IDictionary<string, string> values)
         {
             Tag = tag;
             _values = values;
+            _pathCache = new ConcurrentDictionary<string, PathCacheItem>();
         }
 
         public bool TryGet(string path, out string value)
         {
             return _values.TryGetValue(path, out value);
+        }
+
+        internal bool TryGetFromCache(string path, out PathCacheItem value)
+        {
+            return _pathCache.TryGetValue(path, out value);
+        }
+
+        internal void TryAdd(string path, PathCacheItem value)
+        {
+            _pathCache.TryAdd(path, value);
         }
     }
 }
