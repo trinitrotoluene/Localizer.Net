@@ -18,7 +18,10 @@ namespace Localizer.Net
         public string Resolve(string locale, string path, params (string name, object value)[] context)
         {
             var localeImpl = _locales[locale];
-            var locString = localeImpl.Get(path);
+            if (!localeImpl.TryGet(path, out var locString))
+            {
+                throw new LocalizerException($"Locale {localeImpl.Tag} has no value for path {path}!");
+            }
 
             var parseResults = new List<ParseResult>();
             var sb = new StringBuilder();

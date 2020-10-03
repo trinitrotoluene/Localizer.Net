@@ -14,9 +14,9 @@ namespace Localizer.Net
             _values = values;
         }
 
-        public string Get(string path)
+        public bool TryGet(string path, out string value)
         {
-            return _values[path];
+            return _values.TryGetValue(path, out value);
         }
     }
 }
