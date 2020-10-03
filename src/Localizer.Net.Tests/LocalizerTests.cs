@@ -92,7 +92,7 @@ namespace Localizer.Net.Tests
         }
 
         [Test]
-        public void AssertExecuteStatementReplamentAtStart()
+        public void AssertExecuteStatementReplacementAtStart()
         {
             var localization = new LocalizationBuilder()
                 .UseJsonFiles("locales")
@@ -100,6 +100,26 @@ namespace Localizer.Net.Tests
 
             var test4 = localization.Resolve("en-US", "context-tests.test4", ("isKieran", true));
             Assert.AreEqual("Kieran is cool", test4);
+        }
+
+        [Test]
+        public void AssertThrowsUnclosedBrace()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            Assert.Throws<LocalizerException>(() => localization.Resolve("en-US", "context-tests.test5"));
+        }
+
+        [Test]
+        public void AssertThrowsEmptyScript()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            Assert.Throws<LocalizerException>(() => localization.Resolve("en-US", "context-tests.test6"));
         }
     }
 

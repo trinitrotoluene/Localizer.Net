@@ -7,6 +7,8 @@
         "test1": "This is not a {drill}!",
         "test2": "This is not a {drill} {drill2}",
         "test3": "This is {isDrill ? 'not' : 'definitely'} a {drill}!",
-        "test4": "{isKieran ? 'Kieran' : 'Trinit'} is cool"
+        "test4": "{isKieran ? 'Kieran' : 'Trinit'} is cool",
+        "test5": "{",
+        "test6": "{}"
     }
 }
