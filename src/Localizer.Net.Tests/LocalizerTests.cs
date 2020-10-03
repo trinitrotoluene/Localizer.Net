@@ -25,7 +25,17 @@ namespace Localizer.Net.Tests
         public void AssertThrowsInvalidDirectory()
         {
             var builder = new LocalizationBuilder();
-            Assert.Throws<DirectoryNotFoundException>(() => builder.UseJsonFiles("xyz"));
+            Assert.Throws<DirectoryNotFoundException>(() => builder.UseJsonFiles("xyz").Build());
+        }
+
+        [Test]
+        public void AssertThrowsDuplicateLocalization()
+        {
+            var builder = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .UseJsonFiles("locales");
+
+            Assert.Throws<LocalizerException>(() => builder.Build());
         }
 
         [Test]
