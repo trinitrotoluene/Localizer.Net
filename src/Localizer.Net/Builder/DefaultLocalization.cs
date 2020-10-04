@@ -39,14 +39,18 @@ namespace Localizer.Net
                 localeImpl = _defaultLocale;
             }
 
+            // If we have this path cached take the fast paths
             if (localeImpl.TryGetFromCache(path, out var cachedPathItem))
             {
                 switch (cachedPathItem.Type)
                 {
+                    // Return the string directly
                     case CacheItemType.Literal:
                         return locString;
+                    // Execute embedded scripts and format them into the returned string
                     case CacheItemType.Formatted:
-                        return ExecuteScriptsAndFormat(cachedPathItem, context);
+                        var args = CreateGlobalDictionary(context);
+                        return ExecuteScriptsAndFormat(cachedPathItem, args);
                     default:
                         Debug.Fail("Invalid CacheItemType passed to PathCacheItem!");
                         throw new Exception();
@@ -54,6 +58,7 @@ namespace Localizer.Net
             }
             else
             {
+                // Parse for scripts
                 var sb = new StringBuilder();
                 ParseResult lastResult = null;
                 var parseResults = Parse(sb, locString).ToArray();
@@ -62,25 +67,28 @@ namespace Localizer.Net
                     lastResult = parseResults[parseResults.Length - 1];
                 }
 
+                // If there are scripts embedded in this string
                 PathCacheItem cacheItem;
                 if (parseResults.Length > 0)
                 {
+                    // Add any trailing characters to the format string
                     if (lastResult?.EndIndex > 0 && lastResult.EndIndex != (locString.Length - 1))
                     {
                         var startIndex = lastResult.EndIndex + 1;
                         sb.Append(locString.Substring(startIndex, locString.Length - startIndex));
                     }
 
+                    // Compile the scripts for each result from context
+                    var args = CreateGlobalDictionary(context);
+                    PopulateScripts(parseResults, args);
+
                     cacheItem = new PathCacheItem(CacheItemType.Formatted, sb.ToString(), parseResults);
                     localeImpl.TryAdd(path, cacheItem);
 
-                    var results = CreateAndExecuteScripts(cacheItem, context);
-
-                    var formatString = sb.ToString();
-                    var formattedString = string.Format(formatString, results);
-
-                    return formattedString;
+                    var resultString = ExecuteScriptsAndFormat(cacheItem, args);
+                    return resultString;
                 }
+                // No scripts, no problem.
                 else
                 {
                     cacheItem = new PathCacheItem(CacheItemType.Literal, locString, null);
@@ -90,53 +98,59 @@ namespace Localizer.Net
             }
         }
 
-        private string ExecuteScriptsAndFormat(PathCacheItem item, (string name, object value)[] context)
+        private void PopulateScripts(ParseResult[] parseResults, Dictionary<string, object> args)
         {
-            var args = CreateGlobalDictionary(context);
+            var globals = new Globals(args);
+            var injectionString = CreateInjectionString(globals);
+
+            for (int i = 0; i < parseResults.Length; i++)
+            {
+                switch (parseResults[i].Type)
+                {
+                    case ParseResultType.Simple:
+                        continue;
+                    case ParseResultType.Complex:
+                        var script = CSharpScript.Create(
+                            injectionString + parseResults[i].Text,
+                            ScriptOptions.Default.WithImports("System"),
+                            typeof(Globals)
+                        );
+                        script.Compile();
+                        parseResults[i].Script = script;
+                        continue;
+                    default:
+                        Debug.Fail("Invalid ParseResultType passed to ParseResult!");
+                        throw new Exception();
+                }
+            }
+        }
+
+        private string ExecuteScriptsAndFormat(PathCacheItem item, Dictionary<string, object> args)
+        {
             var globals = new Globals(args);
 
             var results = new object[item.ParseResults.Length];
             for (int i = 0; i < item.ParseResults.Length; i++)
             {
-                var result = item.ParseResults[i].Script.RunAsync(globals)
-                    .ConfigureAwait(false)
-                    .GetAwaiter()
-                    .GetResult();
-
-                results[i] = result.ReturnValue;
+                switch (item.ParseResults[i].Type)
+                {
+                    case ParseResultType.Simple:
+                        results[i] = args[item.ParseResults[i].Text];
+                        continue;
+                    case ParseResultType.Complex:
+                        results[i] = item.ParseResults[i].Script.RunAsync(globals)
+                            .ConfigureAwait(false)
+                            .GetAwaiter()
+                            .GetResult()
+                            .ReturnValue;
+                        continue;
+                    default:
+                        Debug.Fail("Invalid ParseResultType passed to ParseResult!");
+                        throw new Exception();
+                }
             }
 
             return string.Format(item.FormatString, results);
-        }
-
-        private object[] CreateAndExecuteScripts(PathCacheItem item, (string name, object value)[] context)
-        {
-            var parseResults = item.ParseResults;
-
-            var args = CreateGlobalDictionary(context);
-            var globals = new Globals(args);
-            var injectionString = CreateInjectionString(globals);
-
-            var results = new object[parseResults.Length];
-            for (int i = 0; i < parseResults.Length; i++)
-            {
-                var script = CSharpScript.Create(
-                    injectionString + parseResults[i].Text,
-                    ScriptOptions.Default.WithImports("System"),
-                    typeof(Globals)
-                );
-                script.Compile();
-                parseResults[i].Script = script;
-
-                var result = script.RunAsync(globals)
-                    .ConfigureAwait(false)
-                    .GetAwaiter()
-                    .GetResult();
-
-                results[i] = result.ReturnValue;
-            }
-
-            return results;
         }
 
         private Dictionary<string, object> CreateGlobalDictionary((string name, object value)[] context)
@@ -212,12 +226,26 @@ namespace Localizer.Net
 
                 var scriptText = value.Substring(index + 1, length);
                 scriptText = scriptText.Replace('\'', '\"');
-                lastResult = new ParseResult(closingIndex, scriptText);
+                var resultType = GetResultType(scriptText);
+                lastResult = new ParseResult(resultType, closingIndex, scriptText);
 
                 parseList.Add(lastResult);
             }
 
             return parseList;
+        }
+
+        private ParseResultType GetResultType(string script)
+        {
+            for (int i = 0; i < script.Length; i++)
+            {
+                if (!char.IsLetterOrDigit(script[i]))
+                {
+                    return ParseResultType.Complex;
+                }
+            }
+
+            return ParseResultType.Simple;
         }
     }
 }
