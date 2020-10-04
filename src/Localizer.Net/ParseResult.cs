@@ -19,10 +19,4 @@ namespace Localizer.Net
             Type = type;
         }
     }
-
-    internal enum ParseResultType
-    {
-        Simple,
-        Complex
-    }
 }
