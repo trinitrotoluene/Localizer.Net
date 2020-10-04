@@ -10,12 +10,13 @@ namespace Localizer.Net
 
         public Script<object> Script { get; internal set; }
 
-        public ParseResultType Type { get; } // todo
+        public ParseResultType Type { get; }
 
-        public ParseResult(int endIndex, string text)
+        public ParseResult(ParseResultType type, int endIndex, string text)
         {
             EndIndex = endIndex;
             Text = text;
+            Type = type;
         }
     }
 
