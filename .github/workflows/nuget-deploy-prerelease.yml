@@ -5,7 +5,7 @@ on:
     branches: [ master ]
     
 env:
-  VERSION_SUFFIX: beta-$GITHUB_RUN_NUMBER
+  VERSION_SUFFIX: beta-${{ github.run_number }}
 
 jobs:
   build:
