@@ -178,10 +178,11 @@ namespace Localizer.Net
 
         private List<ParseResult> Parse(StringBuilder output, string value)
         {
+            var valueSpan = value.AsSpan();
+
             var parseList = new List<ParseResult>();
 
             int number = 0;
-
             int index = -1;
             int closingIndex = 0;
             ParseResult lastResult = null;
@@ -207,15 +208,15 @@ namespace Localizer.Net
                     throw new LocalizerException($"Empty context at index {index}! Source: {value}");
                 }
 
-                string rawTextBetween;
+                ReadOnlySpan<char> rawTextBetween;
                 if (number == 0)
                 {
-                    rawTextBetween = value.Substring(0, index);
+                    rawTextBetween = valueSpan.Slice(0, index);
                 }
                 else
                 {
                     var betweenIndex = lastResult.EndIndex + 1;
-                    rawTextBetween = value.Substring(betweenIndex, index - betweenIndex);
+                    rawTextBetween = valueSpan.Slice(betweenIndex, index - betweenIndex);
                 }
 
                 output.Append(rawTextBetween);
@@ -224,8 +225,19 @@ namespace Localizer.Net
                     .Append(number++)
                     .Append('}');
 
-                var scriptText = value.Substring(index + 1, length);
-                scriptText = scriptText.Replace('\'', '\"');
+                var scriptSpan = valueSpan.Slice(index + 1, length);
+                var scriptBuilder = new StringBuilder();
+                for (int i = 0; i < scriptSpan.Length; i++)
+                {
+                    char scriptChar = scriptSpan[i];
+
+                    if (scriptChar == '\'')
+                        scriptBuilder.Append('"');
+                    else
+                        scriptBuilder.Append(scriptChar);
+                }
+
+                var scriptText = scriptBuilder.ToString();
                 var resultType = GetResultType(scriptText);
                 lastResult = new ParseResult(resultType, closingIndex, scriptText);
 
