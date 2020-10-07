@@ -12,6 +12,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0"/>
 
     <ProjectReference Include="../Localizer.Net/Localizer.Net.csproj"/>
+    <ProjectReference Include="../Localizer.Net.Json/Localizer.Net.Json.csproj"/>
 
     <None Update="locales\**\*.*">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

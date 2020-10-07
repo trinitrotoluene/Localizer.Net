@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis.Scripting;
 
 namespace Localizer.Net
 {
@@ -10,7 +9,7 @@ namespace Localizer.Net
 
         private readonly IDictionary<string, string> _values;
 
-        private readonly IDictionary<string, PathCacheItem> _pathCache;
+        private readonly ConcurrentDictionary<string, PathCacheItem> _pathCache;
 
         public Locale(string tag, IDictionary<string, string> values)
         {

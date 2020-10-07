@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.12.1" />
 
-    <ProjectReference Include="../Localizer.Net/Localizer.Net.csproj"/>
+    <ProjectReference Include="../Localizer.Net.Json/Localizer.Net.Json.csproj"/>
   </ItemGroup>
 
   <ItemGroup>

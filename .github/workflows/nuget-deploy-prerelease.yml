@@ -3,12 +3,12 @@ name: NuGet Deploy (Prerelease)
 on:
   push:
     branches: [ master ]
-    
+
 env:
   VERSION_SUFFIX: beta-${{ github.run_number }}
 
 jobs:
-  build:
+  publish-prerelease:
     if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-latest
     steps:
@@ -17,7 +17,12 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.301
-      - name: Build Package
-        run: echo "building prerelease package with suffix $VERSION_SUFFIX" && dotnet pack -c Release src/Localizer.Net/Localizer.Net.csproj --version-suffix $VERSION_SUFFIX
-      - name: Upload Package
+      - name: Pack Localizer.Net
+        run: dotnet pack -c Release src/Localizer.Net/Localizer.Net.csproj --version-suffix $VERSION_SUFFIX
+      - name: Pack Localizer.Net.Json
+        run: dotnet pack -c Release src/Localizer.Net.Json/Localizer.Net.Json.csproj --version-suffix $VERSION_SUFFIX
+
+      - name: Upload Localizer.Net
         run: dotnet nuget push src/Localizer.Net/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source https://api.nuget.org/v3/index.json
+      - name: Upload Localizer.Net.Json
+        run: dotnet nuget push src/Localizer.Net.Json/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source https://api.nuget.org/v3/index.json
