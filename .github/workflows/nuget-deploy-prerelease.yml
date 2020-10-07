@@ -5,10 +5,11 @@ on:
     branches: [ master ]
     
 env:
-  VERSION_SUFFIX: beta${GITHUB_RUN_NUMBER}
+  VERSION_SUFFIX: beta-$GITHUB_RUN_NUMBER
 
 jobs:
   build:
+    if: "!contains(github.event.head_commit.message, 'skip ci')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
