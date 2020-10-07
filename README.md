@@ -94,4 +94,25 @@ However since all code between braces executes in a full Roslyn-powered scriptin
 ILocalization myLocalization.Resolve("en-US", "somekey", ("isAlone", false)); // "Hello, is anybody there?"
 ```
 
-Strings that do not include scripts will bypass this execution stage as it will add a significant latency penalty to returning localised strings. A point of future improvement for the library will be aggressive caching of scripts and "fast" paths for simple replacements like `"{foo}"`.
+## Performance Considerations
+
+Compiled scripts are cached after the first call to resolve the localisation, however any replacement that involves executing a script will incur significant overhead compared to returning a raw string literal. For this reason, any scripts that are simply variable-name replacements are just evaluated as ToString calls and formatted into the localisation.
+
+For some idea of how expensive complex replacements are, see this sample benchmark run as of commit 022d4d2
+
+```ini
+BenchmarkDotNet=v0.12.1, OS=pop 20.04
+AMD Ryzen 7 3700X, 1 CPU, 16 logical and 8 physical cores
+.NET Core SDK=3.1.402
+  [Host]        : .NET Core 3.1.8 (CoreCLR 4.700.20.41105, CoreFX 4.700.20.41903), X64 RyuJIT
+  .NET Core 3.1 : .NET Core 3.1.8 (CoreCLR 4.700.20.41105, CoreFX 4.700.20.41903), X64 RyuJIT
+
+Job=.NET Core 3.1  Runtime=.NET Core 3.1
+```
+|              Method |         Mean |        Error |        StdDev |       Median |
+|-------------------- |-------------:|-------------:|--------------:|-------------:|
+|           Plaintext |     63.36 ns |     0.543 ns |      0.481 ns |     63.46 ns |
+|  Simple replacement |    468.27 ns |     2.330 ns |      2.180 ns |    467.96 ns |
+| Complex replacement | 39,606.19 ns | 8,041.173 ns | 22,811.469 ns | 28,754.00 ns |
+
+Whether this performance penalty is acceptable will depend on your use-case. For benchmarking performance of the library on your system you can use the `src/Localizer.Net.Benchmarks` project which contains benchmarks that evaluate various features of the library.
