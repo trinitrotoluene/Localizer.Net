@@ -17,10 +17,17 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: 3.1.301
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
+
       - name: Pack Localizer.Net
-        run: dotnet pack -c Release src/Localizer.Net/Localizer.Net.csproj --version-suffix $VERSION_SUFFIX
+        run: dotnet pack --no-restore -c Release src/Localizer.Net/Localizer.Net.csproj --version-suffix $VERSION_SUFFIX
       - name: Pack Localizer.Net.Json
-        run: dotnet pack -c Release src/Localizer.Net.Json/Localizer.Net.Json.csproj --version-suffix $VERSION_SUFFIX
+        run: dotnet pack --no-restore -c Release src/Localizer.Net.Json/Localizer.Net.Json.csproj --version-suffix $VERSION_SUFFIX
 
       - name: Upload Localizer.Net
         run: dotnet nuget push src/Localizer.Net/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source https://api.nuget.org/v3/index.json
