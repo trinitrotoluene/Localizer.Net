@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
 
 namespace Localizer.Net
 {
     public sealed class LocalizationBuilder
     {
-        public ILocaleLoader LocaleLoader { get; private set; }
+        public ILocaleLoader LocaleLoader { get; private set; } = null;
 
         public string PathSeparator { get; private set; } = ".";
 
