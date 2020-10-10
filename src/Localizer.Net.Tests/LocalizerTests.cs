@@ -32,10 +32,9 @@ namespace Localizer.Net.Tests
         public void AssertThrowsDuplicateLocalization()
         {
             var builder = new LocalizationBuilder()
-                .UseJsonFiles("locales")
                 .UseJsonFiles("locales");
 
-            Assert.Throws<LocalizerException>(() => builder.Build());
+            Assert.Throws<LocalizerException>(() => builder.UseJsonFiles("locales"));
         }
 
         [Test]
