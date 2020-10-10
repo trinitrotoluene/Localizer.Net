@@ -5,15 +5,14 @@ namespace Localizer.Net
 {
     public sealed class LocalizationBuilder
     {
+        public ILocaleLoader LocaleLoader { get; private set; }
+
         public string PathSeparator { get; private set; } = ".";
 
         public string DefaultLocale { get; private set; } = null;
 
-        private readonly List<Func<LocalizationBuilder, IEnumerable<Locale>>> _builders;
-
         public LocalizationBuilder()
         {
-            _builders = new List<Func<LocalizationBuilder, IEnumerable<Locale>>>();
         }
 
         public LocalizationBuilder WithPathSeparator(string pathSeparator)
@@ -40,35 +39,20 @@ namespace Localizer.Net
             return this;
         }
 
-        public LocalizationBuilder WithLocaleGenerator(Func<LocalizationBuilder, IEnumerable<Locale>> generatorFunc)
+        public LocalizationBuilder WithLocaleLoader(ILocaleLoader localeLoader)
         {
-            _builders.Add(generatorFunc);
+            LocaleLoader = localeLoader;
             return this;
         }
 
         public ILocalization Build()
         {
-            var finalDict = new Dictionary<string, Locale>();
-            foreach (var builder in _builders)
-            {
-                var locales = builder(this);
-                foreach (var locale in locales)
-                {
-                    if (finalDict.ContainsKey(locale.Tag))
-                    {
-                        throw new LocalizerException($"A locale with tag {locale.Tag} already exists in this builder.");
-                    }
-
-                    finalDict.Add(locale.Tag, locale);
-                }
-            }
-
-            if (DefaultLocale != null && !finalDict.ContainsKey(DefaultLocale))
+            if (DefaultLocale != null && !LocaleLoader.Supports(DefaultLocale))
             {
                 throw new LocalizerException($"The specified default locale \"{DefaultLocale}\" does not exist.");
             }
 
-            return new DefaultLocalization(finalDict, DefaultLocale);
+            return new DefaultLocalization(LocaleLoader, DefaultLocale);
         }
     }
 }
