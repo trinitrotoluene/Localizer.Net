@@ -1,14 +1,15 @@
 # Localizer.Net
 
-| Release Type |                                                                     Version |
-|--------------|-----------------------------------------------------------------------------|
-| Release      |![Nuget](https://img.shields.io/nuget/v/Localizer.Net)                       |
-| Prerelease   |![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Localizer.Net) |
+| Release Type | Version                                                                      |
+|--------------|------------------------------------------------------------------------------|
+| Stable       | ![Nuget](https://img.shields.io/nuget/v/Localizer.Net)                       |
+| Beta         | ![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Localizer.Net) |
 
-| Build Type     | Status                                                                                                                            |
-|----------------|-----------------------------------------------------------------------------------------------------------------------------------|
-| Prerelease     |![NuGet Deploy (Prerelease)](https://github.com/trinitrotoluene/Localizer.Net/workflows/NuGet%20Deploy%20(Prerelease)/badge.svg)   |
-| Last PR/commit |![Build & Test (.NET Core)](https://github.com/trinitrotoluene/Localizer.Net/workflows/Build%20&%20Test%20(.NET%20Core)/badge.svg) |
+| Build Type               | Status                                                                                                                             |
+|--------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| Release (NuGet)          | ![NuGet Deploy (Release)](https://github.com/trinitrotoluene/Localizer.Net/workflows/NuGet%20Deploy%20(Release)/badge.svg)         |
+| Prerelease (NuGet)       | ![NuGet Deploy (Prerelease)](https://github.com/trinitrotoluene/Localizer.Net/workflows/NuGet%20Deploy%20(Prerelease)/badge.svg)   |
+| Last PR                  | ![Build (Pull Requests)](https://github.com/trinitrotoluene/Localizer.Net/workflows/Build%20(Pull%20Requests)/badge.svg)           |
 
 This library provides abstractions to use when localising your .NET application. It includes APIs for injecting localisations into assemblies or type instances. Included is a simple provider that pulls and flattens JSON-formatted localisations, but providers for other formats can quite easily be added as builder extensions.
 
