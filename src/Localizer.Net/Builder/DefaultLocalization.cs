@@ -9,26 +9,27 @@ namespace Localizer.Net
 {
     internal class DefaultLocalization : ILocalization
     {
-        private readonly IDictionary<string, Locale> _locales;
+        private readonly ILocaleLoader _localeLoader;
 
         private readonly Locale _defaultLocale = null;
 
-        public DefaultLocalization(IDictionary<string, Locale> locales, string defaultLocale = null)
+        public DefaultLocalization(ILocaleLoader localeLoader, string defaultLocale = null)
         {
-            _locales = locales;
+            _localeLoader = localeLoader;
             if (defaultLocale != null)
             {
-                _defaultLocale = locales[defaultLocale];
+                _defaultLocale = _localeLoader.Load(defaultLocale);
             }
         }
 
         public string Resolve(string locale, string path, params (string name, object value)[] context)
         {
-            if (!_locales.TryGetValue(locale, out var localeImpl))
+            if (!_localeLoader.Supports(locale))
             {
-                throw new LocalizerException($"No locale exists with tag {locale}!");
+                throw new LocalizerException($"Cannot request an unsupported locale from a localisation! Tag: {locale}!");
             }
 
+            var localeImpl = _localeLoader.Load(locale);
             if (!localeImpl.TryGet(path, out var locString))
             {
                 if (!(_defaultLocale?.TryGet(path, out locString) ?? false))
