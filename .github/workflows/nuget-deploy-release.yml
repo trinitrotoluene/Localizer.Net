@@ -1,0 +1,24 @@
+name: NuGet Deploy (Release)
+
+on:
+  release:
+    types: [ released ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.1.301
+      - name: Pack Localizer.Net
+        run: dotnet pack -c Release src/Localizer.Net/Localizer.Net.csproj
+      - name: Pack Localizer.Net.Json
+        run: dotnet pack -c Release src/Localizer.Net.Json/Localizer.Net.Json.csproj
+
+      - name: Upload Localizer.Net
+        run: dotnet nuget push src/Localizer.Net/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source https://api.nuget.org/v3/index.json
+      - name: Upload Localizer.Net.Json
+        run: dotnet nuget push src/Localizer.Net.Json/bin/Release/*.nupkg --api-key ${{ secrets.NUGET_KEY }} --source https://api.nuget.org/v3/index.json
