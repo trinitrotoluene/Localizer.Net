@@ -40,12 +40,22 @@ namespace Localizer.Net
 
         public LocalizationBuilder WithLocaleLoader(ILocaleLoader localeLoader)
         {
+            if (LocaleLoader != null)
+            {
+                throw new LocalizerException("This builder already has a loader configured!");
+            }
+
             LocaleLoader = localeLoader;
             return this;
         }
 
         public ILocalization Build()
         {
+            if (LocaleLoader == null)
+            {
+                throw new LocalizerException("There is no loader configured for this localisation.");
+            }
+
             if (DefaultLocale != null && !LocaleLoader.Supports(DefaultLocale))
             {
                 throw new LocalizerException($"The specified default locale \"{DefaultLocale}\" does not exist.");
