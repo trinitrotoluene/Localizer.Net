@@ -13,13 +13,27 @@ namespace Localizer.Net
 
         private readonly Locale _defaultLocale = null;
 
-        public DefaultLocalization(ILocaleLoader localeLoader, string defaultLocale = null)
+        private readonly ScriptOptions _scriptOptions = null;
+
+        public DefaultLocalization(ILocaleLoader localeLoader, ScriptOptions scriptOptions, string defaultLocale = null)
         {
+            _scriptOptions = scriptOptions;
             _localeLoader = localeLoader;
             if (defaultLocale != null)
             {
                 _defaultLocale = _localeLoader.Load(defaultLocale);
             }
+        }
+
+        public string Resolve(string path, params (string name, object value)[] context)
+        {
+            if (_defaultLocale == null)
+            {
+                throw new InvalidOperationException(
+                    "Cannot invoke default locale overloads without setting a default locale!");
+            }
+
+            return Resolve(_defaultLocale.Tag, path, context);
         }
 
         public string Resolve(string locale, string path, params (string name, object value)[] context)
@@ -57,46 +71,42 @@ namespace Localizer.Net
                         throw new Exception();
                 }
             }
-            else
+
+            // Parse for scripts
+            var sb = new StringBuilder();
+            ParseResult lastResult = null;
+            var parseResults = Parse(sb, locString).ToArray();
+            if (parseResults.Length > 0)
             {
-                // Parse for scripts
-                var sb = new StringBuilder();
-                ParseResult lastResult = null;
-                var parseResults = Parse(sb, locString).ToArray();
-                if (parseResults.Length > 0)
-                {
-                    lastResult = parseResults[parseResults.Length - 1];
-                }
-
-                // If there are scripts embedded in this string
-                PathCacheItem cacheItem;
-                if (parseResults.Length > 0)
-                {
-                    // Add any trailing characters to the format string
-                    if (lastResult?.EndIndex > 0 && lastResult.EndIndex != (locString.Length - 1))
-                    {
-                        var startIndex = lastResult.EndIndex + 1;
-                        sb.Append(locString.Substring(startIndex, locString.Length - startIndex));
-                    }
-
-                    // Compile the scripts for each result from context
-                    var args = CreateGlobalDictionary(context);
-                    PopulateScripts(parseResults, args);
-
-                    cacheItem = new PathCacheItem(CacheItemType.Formatted, sb.ToString(), parseResults);
-                    localeImpl.TryAdd(path, cacheItem);
-
-                    var resultString = ExecuteScriptsAndFormat(cacheItem, args);
-                    return resultString;
-                }
-                // No scripts, no problem.
-                else
-                {
-                    cacheItem = new PathCacheItem(CacheItemType.Literal, locString, null);
-                    localeImpl.TryAdd(path, cacheItem);
-                    return locString;
-                }
+                lastResult = parseResults[parseResults.Length - 1];
             }
+
+            // If there are scripts embedded in this string
+            PathCacheItem cacheItem;
+            if (parseResults.Length > 0)
+            {
+                // Add any trailing characters to the format string
+                if (lastResult?.EndIndex > 0 && lastResult.EndIndex != (locString.Length - 1))
+                {
+                    var startIndex = lastResult.EndIndex + 1;
+                    sb.Append(locString.Substring(startIndex, locString.Length - startIndex));
+                }
+
+                // Compile the scripts for each result from context
+                var args = CreateGlobalDictionary(context);
+                PopulateScripts(parseResults, args);
+
+                cacheItem = new PathCacheItem(CacheItemType.Formatted, sb.ToString(), parseResults);
+                localeImpl.TryAdd(path, cacheItem);
+
+                var resultString = ExecuteScriptsAndFormat(cacheItem, args);
+                return resultString;
+            }
+
+            // No scripts, no problem.
+            cacheItem = new PathCacheItem(CacheItemType.Literal, locString, null);
+            localeImpl.TryAdd(path, cacheItem);
+            return locString;
         }
 
         private void PopulateScripts(ParseResult[] parseResults, Dictionary<string, object> args)
@@ -111,9 +121,13 @@ namespace Localizer.Net
                     case ParseResultType.Simple:
                         continue;
                     case ParseResultType.Complex:
+                        if (_scriptOptions == null)
+                        {
+                            throw new InvalidOperationException("Localization string contains a script replacement but script execution has been disabled by passing null ScriptOptions to the LocalizationBuilder.");
+                        }
                         var script = CSharpScript.Create(
                             injectionString + parseResults[i].Text,
-                            ScriptOptions.Default.WithImports("System"),
+                            _scriptOptions,
                             typeof(Globals)
                         );
                         script.Compile();

@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Reflection;
 using NUnit.Framework;
@@ -131,9 +132,41 @@ namespace Localizer.Net.Tests
         }
 
         [Test]
+        public void AssertDefaultLocaleOverload()
+        {
+            var localization = new LocalizationBuilder()
+                .WithDefaultLocale("en-US")
+                .UseJsonFiles("locales")
+                .Build();
+
+            Assert.AreEqual("world", localization.Resolve("hello"));
+        }
+
+        [Test]
+        public void AssertOverloadThrowsWhenNoDefaultLocaleSet()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .Build();
+
+            Assert.Throws<InvalidOperationException>(() => localization.Resolve("hello"));
+        }
+
+        [Test]
         public void AssertThrowsBadLocale()
         {
             Assert.Throws<LocalizerException>(() => new LocalizationBuilder().Build().Resolve("blah", "blah"));
+        }
+
+        [Test]
+        public void AssertThrowsScriptWhenDisabled()
+        {
+            var localization = new LocalizationBuilder()
+                .UseJsonFiles("locales")
+                .WithScriptOptions(null)
+                .Build();
+
+            Assert.Throws<InvalidOperationException>(() => localization.Resolve("en-US", "context-tests.test3"));
         }
     }
 

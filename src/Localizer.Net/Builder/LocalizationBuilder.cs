@@ -1,4 +1,5 @@
 using System;
+using Microsoft.CodeAnalysis.Scripting;
 
 namespace Localizer.Net
 {
@@ -9,6 +10,8 @@ namespace Localizer.Net
         public string PathSeparator { get; private set; } = ".";
 
         public string DefaultLocale { get; private set; } = null;
+
+        public ScriptOptions ScriptOptions { get; private set; } = ScriptOptions.Default.AddImports("System");
 
         public LocalizationBuilder()
         {
@@ -49,6 +52,12 @@ namespace Localizer.Net
             return this;
         }
 
+        public LocalizationBuilder WithScriptOptions(ScriptOptions options)
+        {
+            ScriptOptions = options;
+            return this;
+        }
+
         public ILocalization Build()
         {
             if (LocaleLoader == null)
@@ -61,7 +70,7 @@ namespace Localizer.Net
                 throw new LocalizerException($"The specified default locale \"{DefaultLocale}\" does not exist.");
             }
 
-            return new DefaultLocalization(LocaleLoader, DefaultLocale);
+            return new DefaultLocalization(LocaleLoader, ScriptOptions, DefaultLocale);
         }
     }
 }
