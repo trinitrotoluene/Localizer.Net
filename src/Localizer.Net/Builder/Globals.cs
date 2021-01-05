@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace Localizer.Net
 {
-    internal class Globals
+    public class Globals
     {
         public Dictionary<string, object> Args { get; }
 
